@@ -1,0 +1,257 @@
+Crie um sistema SaaS multi-tenant de monitoramento inteligente para câmeras IP Intelbras, focado em detecção de veículos em tempo real.
+
+O sistema deve suportar DOIS modos de operação:
+
+MODO 1 — CLOUD EVENTS
+- Utiliza eventos inteligentes enviados pela própria câmera
+- Compatível com Intelbras ONVIF
+- Recebe eventos de:
+  - detecção veicular
+  - linha virtual
+  - cerca virtual
+  - movimento
+- Sistema apenas processa eventos e envia notificações
+- Baixíssimo consumo de CPU
+
+MODO 2 — EDGE AI
+- Um agente local roda próximo da câmera
+- Captura RTSP
+- Processa vídeo com IA localmente
+- Detecta:
+  - carro
+  - moto
+  - caminhão
+- Usa YOLOv8n
+- Envia apenas eventos para a nuvem
+- Deve funcionar em:
+  - Windows
+  - Linux
+  - Docker
+  - Mini PCs
+  - Raspberry Pi (modo otimizado)
+
+OBJETIVO:
+Criar uma plataforma moderna parecida com um “Intelbras IA Cloud”.
+
+STACK:
+
+BACKEND:
+- Node.js
+- TypeScript
+- NestJS
+- PostgreSQL
+- Prisma ORM
+- Redis
+- WebSocket
+- JWT Auth
+
+FRONTEND:
+- Next.js 15
+- TailwindCSS
+- shadcn/ui
+- Dashboard moderno
+- Tema dark profissional
+- Layout SaaS
+
+EDGE AGENT:
+- Python
+- FastAPI
+- OpenCV
+- Ultralytics YOLOv8
+- FFmpeg
+- ONVIF
+- Docker support
+
+NOTIFICAÇÕES:
+- Push notification
+- Telegram
+- WhatsApp Webhook
+- Email
+- Browser notifications
+
+ARQUITETURA:
+
+MULTI-TENANT:
+- Banco único
+- tenant_id em todas entidades
+- Isolamento por tenant
+- Usuários separados
+- Roles:
+  - owner
+  - admin
+  - operator
+  - viewer
+
+ENTIDADES:
+- Tenants
+- Users
+- Cameras
+- Events
+- Notifications
+- DetectionRules
+- Zones
+- EdgeAgents
+
+CÂMERAS:
+Cadastro de:
+- nome
+- RTSP URL
+- IP
+- usuário
+- senha
+- fabricante
+- modelo
+- ONVIF
+- modo:
+  - cloud_events
+  - edge_ai
+
+FUNÇÕES DO SISTEMA:
+
+1. DASHBOARD
+- Total de eventos
+- Câmeras online
+- Últimos veículos detectados
+- Timeline
+- Status dos agentes
+
+2. EVENTOS
+- Snapshot
+- Tipo detectado
+- Horário
+- Confiança IA
+- Câmera
+- Histórico
+
+3. ZONAS
+- Desenhar área de detecção
+- Linha virtual
+- Cerca virtual
+
+4. ALERTAS
+Enviar quando:
+- carro detectado
+- movimento
+- veículo entrou
+- veículo saiu
+- veículo parado
+
+5. STREAMING
+Converter RTSP para:
+- WebRTC
+- HLS
+
+Usar:
+- go2rtc OU MediaMTX
+
+6. IA
+No modo edge_ai:
+- processar 1 frame a cada X ms
+- otimização de CPU
+- usar YOLOv8n
+- ignorar frames duplicados
+- evitar múltiplos alertas seguidos
+
+7. AGENTE EDGE
+Criar serviço Docker:
+- auto reconnect RTSP
+- heartbeat
+- auto update
+- enviar snapshots
+- reconnect automático
+
+8. AUTENTICAÇÃO
+- JWT
+- refresh token
+- RBAC
+- rate limit
+
+9. UI/UX
+Design moderno estilo:
+- Verkada
+- Rhombus
+- Cisco Meraki
+- Intelbras Cloud
+
+Usar:
+- cards modernos
+- sidebar SaaS
+- dashboard responsivo
+- dark mode elegante
+
+10. ESCALABILIDADE
+Preparar para:
+- múltiplos tenants
+- centenas de câmeras
+- milhares de eventos
+
+11. ESTRUTURA DO PROJETO
+
+/apps
+  /web
+  /api
+  /edge-agent
+
+/packages
+  /shared
+  /types
+  /ui
+
+12. CRIAR:
+- Docker compose completo
+- Prisma schema
+- Seed inicial
+- Estrutura modular NestJS
+- Serviços ONVIF
+- Serviço RTSP
+- Serviço IA
+- Sistema WebSocket em tempo real
+
+13. TELAS:
+- Login
+- Dashboard
+- Lista de câmeras
+- Cadastro câmera
+- Eventos
+- Configuração notificações
+- Configuração IA
+- Configuração zonas
+- Usuários
+- Perfil tenant
+
+14. DIFERENCIAIS:
+- Snapshot automático
+- Timeline visual
+- Streaming em tempo real
+- Detecção inteligente
+- Alertas instantâneos
+- Multi tenant
+- Arquitetura profissional
+
+15. PRIORIDADE:
+Primeiro criar MVP funcional com:
+- login
+- tenants
+- cadastro de câmera
+- conexão RTSP
+- detecção básica
+- eventos
+- dashboard
+- notificações websocket
+
+Depois evoluir:
+- IA avançada
+- ONVIF completo
+- WebRTC
+- mobile app
+
+GERAR:
+- código organizado
+- arquitetura limpa
+- comentários importantes
+- README completo
+- instruções Docker
+- variáveis de ambiente
+- scripts de desenvolvimento
+
+O sistema deve ficar com aparência de produto SaaS profissional pronto para comercialização.
