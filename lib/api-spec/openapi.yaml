@@ -3,20 +3,36 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: CamWatch — Multi-tenant IP camera monitoring API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication & authorization
+  - name: cameras
+    description: Camera management
+  - name: events
+    description: Detection events
+  - name: dashboard
+    description: Dashboard stats & summaries
+  - name: zones
+    description: Detection zones
+  - name: notifications
+    description: Notification channels & rules
+  - name: edge-agents
+    description: Edge AI agent management
+  - name: users
+    description: User & tenant management
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +40,1178 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── AUTH ───────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register new tenant + owner account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email + password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/refresh:
+    post:
+      operationId: refreshToken
+      tags: [auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  # ─── DASHBOARD ──────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard summary statistics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/recent-events:
+    get:
+      operationId: getRecentEvents
+      tags: [dashboard]
+      summary: Get recent detection events for timeline
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventList"
+
+  /dashboard/events-by-hour:
+    get:
+      operationId: getEventsByHour
+      tags: [dashboard]
+      summary: Events grouped by hour for the last 24h
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventsByHourList"
+
+  # ─── CAMERAS ────────────────────────────────────────────────────────────
+  /cameras:
+    get:
+      operationId: listCameras
+      tags: [cameras]
+      summary: List all cameras for the tenant
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CameraList"
+    post:
+      operationId: createCamera
+      tags: [cameras]
+      summary: Register a new camera
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCameraBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camera"
+
+  /cameras/{id}:
+    get:
+      operationId: getCamera
+      tags: [cameras]
+      summary: Get camera details
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camera"
+    patch:
+      operationId: updateCamera
+      tags: [cameras]
+      summary: Update camera
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCameraBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camera"
+    delete:
+      operationId: deleteCamera
+      tags: [cameras]
+      summary: Delete camera
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Deleted
+
+  /cameras/{id}/status:
+    patch:
+      operationId: updateCameraStatus
+      tags: [cameras]
+      summary: Update camera online/offline status
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCameraStatusBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camera"
+
+  # ─── EVENTS ─────────────────────────────────────────────────────────────
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: List detection events
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: cameraId
+          schema:
+            type: integer
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventList"
+    post:
+      operationId: createEvent
+      tags: [events]
+      summary: Ingest a new detection event (used by edge agents)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{id}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      summary: Get event details
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+    delete:
+      operationId: deleteEvent
+      tags: [events]
+      summary: Delete event
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── ZONES ──────────────────────────────────────────────────────────────
+  /zones:
+    get:
+      operationId: listZones
+      tags: [zones]
+      summary: List detection zones for the tenant
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: cameraId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZoneList"
+    post:
+      operationId: createZone
+      tags: [zones]
+      summary: Create a detection zone
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateZoneBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Zone"
+
+  /zones/{id}:
+    patch:
+      operationId: updateZone
+      tags: [zones]
+      summary: Update detection zone
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateZoneBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Zone"
+    delete:
+      operationId: deleteZone
+      tags: [zones]
+      summary: Delete detection zone
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── NOTIFICATIONS ──────────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: listNotificationChannels
+      tags: [notifications]
+      summary: List notification channels
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelList"
+    post:
+      operationId: createNotificationChannel
+      tags: [notifications]
+      summary: Create notification channel
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNotificationChannelBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+
+  /notifications/{id}:
+    patch:
+      operationId: updateNotificationChannel
+      tags: [notifications]
+      summary: Update notification channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationChannelBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+    delete:
+      operationId: deleteNotificationChannel
+      tags: [notifications]
+      summary: Delete notification channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── EDGE AGENTS ────────────────────────────────────────────────────────
+  /edge-agents:
+    get:
+      operationId: listEdgeAgents
+      tags: [edge-agents]
+      summary: List edge agents
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdgeAgentList"
+    post:
+      operationId: createEdgeAgent
+      tags: [edge-agents]
+      summary: Register an edge agent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEdgeAgentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdgeAgent"
+
+  /edge-agents/{id}:
+    patch:
+      operationId: updateEdgeAgent
+      tags: [edge-agents]
+      summary: Update edge agent
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEdgeAgentBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdgeAgent"
+    delete:
+      operationId: deleteEdgeAgent
+      tags: [edge-agents]
+      summary: Delete edge agent
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Deleted
+
+  /edge-agents/{id}/heartbeat:
+    post:
+      operationId: edgeAgentHeartbeat
+      tags: [edge-agents]
+      summary: Edge agent heartbeat ping
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdgeAgent"
+
+  # ─── USERS ──────────────────────────────────────────────────────────────
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users in the tenant
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+    post:
+      operationId: inviteUser
+      tags: [users]
+      summary: Invite a new user to the tenant
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteUserBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user role
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: removeUser
+      tags: [users]
+      summary: Remove user from tenant
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Removed
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    # ─── AUTH ───────────────────────────────────────────────────────────
+    RegisterBody:
+      type: object
+      properties:
+        tenantName:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+      required: [tenantName, name, email, password]
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [email, password]
+
+    RefreshBody:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+      required: [refreshToken]
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserProfile"
+      required: [accessToken, refreshToken, user]
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        tenantId:
+          type: integer
+        tenantName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, email, role, tenantId, tenantName, createdAt]
+
+    # ─── DASHBOARD ──────────────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      properties:
+        totalEvents:
+          type: integer
+        eventsToday:
+          type: integer
+        camerasTotal:
+          type: integer
+        camerasOnline:
+          type: integer
+        edgeAgentsOnline:
+          type: integer
+        eventsByType:
+          type: object
+          additionalProperties:
+            type: integer
+      required: [totalEvents, eventsToday, camerasTotal, camerasOnline, edgeAgentsOnline, eventsByType]
+
+    EventsByHour:
+      type: object
+      properties:
+        hour:
+          type: string
+        count:
+          type: integer
+      required: [hour, count]
+
+    EventsByHourList:
+      type: array
+      items:
+        $ref: "#/components/schemas/EventsByHour"
+
+    # ─── CAMERA ─────────────────────────────────────────────────────────
+    Camera:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenantId:
+          type: integer
+        name:
+          type: string
+        rtspUrl:
+          type: string
+        ip:
+          type: string
+        username:
+          type: string
+        manufacturer:
+          type: string
+        model:
+          type: string
+        onvifEnabled:
+          type: boolean
+        mode:
+          type: string
+          enum: [cloud_events, edge_ai]
+        status:
+          type: string
+          enum: [online, offline, unknown]
+        location:
+          type: string
+        notes:
+          type: string
+        lastSeenAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, tenantId, name, mode, status, onvifEnabled, createdAt]
+
+    CameraList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Camera"
+
+    CreateCameraBody:
+      type: object
+      properties:
+        name:
+          type: string
+        rtspUrl:
+          type: string
+        ip:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        manufacturer:
+          type: string
+        model:
+          type: string
+        onvifEnabled:
+          type: boolean
+        mode:
+          type: string
+          enum: [cloud_events, edge_ai]
+        location:
+          type: string
+        notes:
+          type: string
+      required: [name, mode]
+
+    UpdateCameraBody:
+      type: object
+      properties:
+        name:
+          type: string
+        rtspUrl:
+          type: string
+        ip:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        manufacturer:
+          type: string
+        model:
+          type: string
+        onvifEnabled:
+          type: boolean
+        mode:
+          type: string
+          enum: [cloud_events, edge_ai]
+        location:
+          type: string
+        notes:
+          type: string
+
+    UpdateCameraStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [online, offline, unknown]
+      required: [status]
+
+    # ─── EVENT ──────────────────────────────────────────────────────────
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenantId:
+          type: integer
+        cameraId:
+          type: integer
+        cameraName:
+          type: string
+        type:
+          type: string
+          enum: [vehicle, car, motorcycle, truck, person, motion, line_cross, zone_enter, zone_exit, vehicle_stopped]
+        confidence:
+          type: number
+        snapshotUrl:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        source:
+          type: string
+          enum: [cloud_events, edge_ai, onvif]
+        detectedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, tenantId, cameraId, type, source, detectedAt, createdAt]
+
+    EventList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Event"
+
+    CreateEventBody:
+      type: object
+      properties:
+        cameraId:
+          type: integer
+        type:
+          type: string
+          enum: [vehicle, car, motorcycle, truck, person, motion, line_cross, zone_enter, zone_exit, vehicle_stopped]
+        confidence:
+          type: number
+        snapshotUrl:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        source:
+          type: string
+          enum: [cloud_events, edge_ai, onvif]
+        detectedAt:
+          type: string
+          format: date-time
+      required: [cameraId, type, source]
+
+    # ─── ZONE ───────────────────────────────────────────────────────────
+    Zone:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenantId:
+          type: integer
+        cameraId:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [polygon, line, rectangle]
+        points:
+          type: array
+          items:
+            type: object
+            properties:
+              x:
+                type: number
+              y:
+                type: number
+            required: [x, y]
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, tenantId, cameraId, name, type, points, active, createdAt]
+
+    ZoneList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Zone"
+
+    CreateZoneBody:
+      type: object
+      properties:
+        cameraId:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [polygon, line, rectangle]
+        points:
+          type: array
+          items:
+            type: object
+            properties:
+              x:
+                type: number
+              y:
+                type: number
+            required: [x, y]
+        active:
+          type: boolean
+      required: [cameraId, name, type, points]
+
+    UpdateZoneBody:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [polygon, line, rectangle]
+        points:
+          type: array
+          items:
+            type: object
+            properties:
+              x:
+                type: number
+              y:
+                type: number
+            required: [x, y]
+        active:
+          type: boolean
+
+    # ─── NOTIFICATION CHANNEL ───────────────────────────────────────────
+    NotificationChannel:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenantId:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [telegram, whatsapp, email, webhook, push]
+        config:
+          type: object
+          additionalProperties: true
+        active:
+          type: boolean
+        triggerTypes:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, tenantId, name, type, config, active, triggerTypes, createdAt]
+
+    NotificationChannelList:
+      type: array
+      items:
+        $ref: "#/components/schemas/NotificationChannel"
+
+    CreateNotificationChannelBody:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [telegram, whatsapp, email, webhook, push]
+        config:
+          type: object
+          additionalProperties: true
+        active:
+          type: boolean
+        triggerTypes:
+          type: array
+          items:
+            type: string
+      required: [name, type, config]
+
+    UpdateNotificationChannelBody:
+      type: object
+      properties:
+        name:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+        active:
+          type: boolean
+        triggerTypes:
+          type: array
+          items:
+            type: string
+
+    # ─── EDGE AGENT ─────────────────────────────────────────────────────
+    EdgeAgent:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenantId:
+          type: integer
+        name:
+          type: string
+        token:
+          type: string
+        platform:
+          type: string
+          enum: [linux, windows, docker, raspberry_pi]
+        version:
+          type: string
+        status:
+          type: string
+          enum: [online, offline, unknown]
+        lastHeartbeatAt:
+          type: string
+          format: date-time
+        cameraIds:
+          type: array
+          items:
+            type: integer
+        config:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, tenantId, name, token, status, createdAt]
+
+    EdgeAgentList:
+      type: array
+      items:
+        $ref: "#/components/schemas/EdgeAgent"
+
+    CreateEdgeAgentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        platform:
+          type: string
+          enum: [linux, windows, docker, raspberry_pi]
+        cameraIds:
+          type: array
+          items:
+            type: integer
+        config:
+          type: object
+          additionalProperties: true
+      required: [name]
+
+    UpdateEdgeAgentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        platform:
+          type: string
+          enum: [linux, windows, docker, raspberry_pi]
+        version:
+          type: string
+        cameraIds:
+          type: array
+          items:
+            type: integer
+        config:
+          type: object
+          additionalProperties: true
+
+    # ─── USERS ──────────────────────────────────────────────────────────
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenantId:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, operator, viewer]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, tenantId, name, email, role, createdAt]
+
+    UserList:
+      type: array
+      items:
+        $ref: "#/components/schemas/User"
+
+    InviteUserBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        role:
+          type: string
+          enum: [admin, operator, viewer]
+      required: [name, email, password, role]
+
+    UpdateUserBody:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [admin, operator, viewer]
+        name:
+          type: string
