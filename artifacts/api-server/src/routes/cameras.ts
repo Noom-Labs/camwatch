@@ -132,6 +132,83 @@ router.patch("/cameras/:id/status", requireAuth, async (req, res): Promise<void>
   res.json(formatCamera(camera));
 });
 
+// ── Snapshot proxy ────────────────────────────────────────────────────────────
+// Tries common Intelbras / generic camera snapshot endpoints in order.
+
+const SNAPSHOT_PATHS = [
+  "/onvifsnapshot/media_service/snapshot?channel=1&subtype=0",
+  "/cgi-bin/snapshot.cgi",
+  "/webcapture.jpg?command=snap&channel=1",
+  "/snapshot.jpg",
+  "/snap.jpg",
+];
+
+async function fetchSnapshot(
+  ip: string,
+  username: string | null,
+  password: string | null
+): Promise<{ buffer: Buffer; contentType: string } | null> {
+  const [hostname, portStr] = ip.split(":");
+  const port = portStr ?? "80";
+  const base = `http://${hostname}:${port}`;
+
+  const authHeader =
+    username || password
+      ? `Basic ${Buffer.from(`${username ?? "admin"}:${password ?? ""}`).toString("base64")}`
+      : undefined;
+
+  for (const path of SNAPSHOT_PATHS) {
+    try {
+      const res = await fetch(`${base}${path}`, {
+        headers: authHeader ? { Authorization: authHeader } : {},
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (res.ok) {
+        const ct = res.headers.get("content-type") ?? "image/jpeg";
+        if (ct.includes("image") || ct.includes("jpeg") || ct.includes("jpg")) {
+          const buf = Buffer.from(await res.arrayBuffer());
+          return { buffer: buf, contentType: ct };
+        }
+      }
+    } catch {
+      // try next path
+    }
+  }
+  return null;
+}
+
+router.get("/cameras/:id/snapshot", requireAuth, async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+
+  const [camera] = await db
+    .select()
+    .from(camerasTable)
+    .where(and(eq(camerasTable.id, id), eq(camerasTable.tenantId, req.user!.tenantId)));
+
+  if (!camera) {
+    res.status(404).json({ error: "Camera not found" });
+    return;
+  }
+
+  if (!camera.ip) {
+    res.status(422).json({ error: "Camera has no IP configured" });
+    return;
+  }
+
+  const snap = await fetchSnapshot(camera.ip, camera.username, camera.passwordEncrypted);
+  if (!snap) {
+    res.status(502).json({ error: "Could not reach camera — check IP and credentials" });
+    return;
+  }
+
+  res.set("Content-Type", snap.contentType);
+  res.set("Cache-Control", "no-store");
+  res.send(snap.buffer);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function formatCamera(c: typeof camerasTable.$inferSelect) {
   return {
     id: c.id,
