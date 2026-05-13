@@ -12,10 +12,10 @@ import { ShieldAlert, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const registerSchema = z.object({
-  tenantName: z.string().min(2, "Company name is required"),
-  name: z.string().min(2, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  tenantName: z.string().min(2, "Nome da empresa é obrigatório"),
+  name: z.string().min(2, "Nome é obrigatório"),
+  email: z.string().email("E-mail inválido"),
+  password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres"),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -23,7 +23,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function Register() {
   const { login } = useAuth();
   const registerMutation = useRegister();
-  
+
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { tenantName: "", name: "", email: "", password: "" },
@@ -33,10 +33,10 @@ export default function Register() {
     registerMutation.mutate({ data }, {
       onSuccess: (res) => {
         login(res.accessToken, res.refreshToken);
-        toast.success("Account created successfully");
+        toast.success("Conta criada com sucesso");
       },
       onError: (err: any) => {
-        toast.error(err?.message || "Failed to register");
+        toast.error(err?.message || "Falha ao cadastrar");
       }
     });
   };
@@ -48,17 +48,17 @@ export default function Register() {
           <div className="w-12 h-12 rounded bg-primary flex items-center justify-center text-primary-foreground mb-2 shadow-lg shadow-primary/20">
             <ShieldAlert size={24} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Create CamWatch Account</h1>
-          <p className="text-sm text-muted-foreground">Set up a new workspace for your organization</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Criar conta no CamWatch</h1>
+          <p className="text-sm text-muted-foreground">Configure um novo workspace para sua organização</p>
         </div>
 
         <div className="bg-card border border-border p-6 rounded-lg shadow-xl shadow-black/50">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="tenantName">Organization / Company Name</Label>
+              <Label htmlFor="tenantName">Nome da empresa / organização</Label>
               <Input
                 id="tenantName"
-                placeholder="Acme Security"
+                placeholder="Acme Segurança"
                 {...form.register("tenantName")}
               />
               {form.formState.errors.tenantName && (
@@ -67,10 +67,10 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">Your Name</Label>
+              <Label htmlFor="name">Seu nome</Label>
               <Input
                 id="name"
-                placeholder="John Doe"
+                placeholder="João Silva"
                 {...form.register("name")}
               />
               {form.formState.errors.name && (
@@ -79,11 +79,11 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Work Email</Label>
+              <Label htmlFor="email">E-mail corporativo</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="john@company.com"
+                placeholder="joao@empresa.com"
                 {...form.register("email")}
               />
               {form.formState.errors.email && (
@@ -92,7 +92,7 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
                 type="password"
@@ -106,15 +106,15 @@ export default function Register() {
 
             <Button type="submit" className="w-full mt-6" disabled={registerMutation.isPending}>
               {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Workspace
+              Criar workspace
             </Button>
           </form>
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          Já tem uma conta?{" "}
           <Link href="/login">
-            <span className="text-primary hover:underline cursor-pointer">Sign in</span>
+            <span className="text-primary hover:underline cursor-pointer">Entrar</span>
           </Link>
         </p>
       </div>

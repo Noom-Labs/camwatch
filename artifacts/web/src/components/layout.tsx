@@ -17,15 +17,26 @@ import {
 import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/cameras", label: "Cameras", icon: Cctv },
-  { href: "/events", label: "Events", icon: ActivitySquare },
-  { href: "/zones", label: "Zones", icon: Map },
-  { href: "/notifications", label: "Notifications", icon: BellRing },
-  { href: "/edge-agents", label: "Edge Agents", icon: Server },
-  { href: "/users", label: "Users", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Painel", icon: LayoutDashboard },
+  { href: "/cameras", label: "Câmeras", icon: Cctv },
+  { href: "/events", label: "Eventos", icon: ActivitySquare },
+  { href: "/zones", label: "Zonas", icon: Map },
+  { href: "/notifications", label: "Notificações", icon: BellRing },
+  { href: "/edge-agents", label: "Agentes Edge", icon: Server },
+  { href: "/users", label: "Usuários", icon: Users },
+  { href: "/settings", label: "Configurações", icon: Settings },
 ];
+
+const PAGE_TITLES: Record<string, string> = {
+  dashboard: "Painel",
+  cameras: "Câmeras",
+  events: "Eventos",
+  zones: "Zonas",
+  notifications: "Notificações",
+  "edge-agents": "Agentes Edge",
+  users: "Usuários",
+  settings: "Configurações",
+};
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -71,7 +82,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-medium truncate">{user?.name}</span>
             <span className="text-xs text-muted-foreground truncate">{user?.tenantName}</span>
           </div>
-          <Button variant="ghost" size="icon" onClick={logout} title="Sign out">
+          <Button variant="ghost" size="icon" onClick={logout} title="Sair">
             <LogOut size={16} />
           </Button>
         </div>
@@ -82,8 +93,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         {/* Top Header */}
         <header className="h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-6 flex-shrink-0 z-10">
           <div className="flex items-center gap-4">
-            <h1 className="text-sm font-medium capitalize text-muted-foreground">
-              {location.split('/')[1] || 'Dashboard'}
+            <h1 className="text-sm font-medium text-muted-foreground">
+              {PAGE_TITLES[location.split('/')[1] ?? ''] ?? 'Painel'}
             </h1>
           </div>
           <div className="flex items-center gap-4">

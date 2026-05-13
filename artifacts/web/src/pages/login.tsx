@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,8 +12,8 @@ import { ShieldAlert, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().email("E-mail inválido"),
+  password: z.string().min(1, "Senha é obrigatória"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -21,7 +21,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function Login() {
   const { login } = useAuth();
   const loginMutation = useLogin();
-  
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
@@ -31,10 +31,10 @@ export default function Login() {
     loginMutation.mutate({ data }, {
       onSuccess: (res) => {
         login(res.accessToken, res.refreshToken);
-        toast.success("Signed in successfully");
+        toast.success("Login efetuado com sucesso");
       },
       onError: (err: any) => {
-        toast.error(err?.message || "Failed to sign in");
+        toast.error(err?.message || "Falha ao entrar");
       }
     });
   };
@@ -46,18 +46,18 @@ export default function Login() {
           <div className="w-12 h-12 rounded bg-primary flex items-center justify-center text-primary-foreground mb-2 shadow-lg shadow-primary/20">
             <ShieldAlert size={24} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Sign in to CamWatch</h1>
-          <p className="text-sm text-muted-foreground">Enter your credentials to access the command center</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Entrar no CamWatch</h1>
+          <p className="text-sm text-muted-foreground">Informe suas credenciais para acessar a central de monitoramento</p>
         </div>
 
         <div className="bg-card border border-border p-6 rounded-lg shadow-xl shadow-black/50">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">E-mail</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="operator@company.com"
+                placeholder="operador@empresa.com"
                 {...form.register("email")}
               />
               {form.formState.errors.email && (
@@ -67,7 +67,7 @@ export default function Login() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Senha</Label>
               </div>
               <Input
                 id="password"
@@ -82,15 +82,15 @@ export default function Login() {
 
             <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
               {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
+              Entrar
             </Button>
           </form>
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
+          Não tem uma conta?{" "}
           <Link href="/register">
-            <span className="text-primary hover:underline cursor-pointer">Register tenant</span>
+            <span className="text-primary hover:underline cursor-pointer">Cadastrar empresa</span>
           </Link>
         </p>
       </div>

@@ -20,45 +20,45 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Events</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de eventos</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalEvents || 0}</div>
-            <p className="text-xs text-muted-foreground">+{stats?.eventsToday || 0} today</p>
+            <p className="text-xs text-muted-foreground">+{stats?.eventsToday || 0} hoje</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cameras Online</CardTitle>
+            <CardTitle className="text-sm font-medium">Câmeras online</CardTitle>
             <Cctv className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.camerasOnline || 0} / {stats?.camerasTotal || 0}</div>
-            <p className="text-xs text-muted-foreground">Active feeds</p>
+            <p className="text-xs text-muted-foreground">Transmissões ativas</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Edge Agents</CardTitle>
+            <CardTitle className="text-sm font-medium">Agentes Edge</CardTitle>
             <Server className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.edgeAgentsOnline || 0}</div>
-            <p className="text-xs text-muted-foreground">Online agents</p>
+            <p className="text-xs text-muted-foreground">Agentes conectados</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Status</CardTitle>
+            <CardTitle className="text-sm font-medium">Status do sistema</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">Operational</div>
-            <p className="text-xs text-muted-foreground">All systems go</p>
+            <div className="text-2xl font-bold text-green-500">Operacional</div>
+            <p className="text-xs text-muted-foreground">Todos os sistemas ok</p>
           </CardContent>
         </Card>
       </div>
@@ -66,7 +66,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>24h Event Timeline</CardTitle>
+            <CardTitle>Linha do tempo (24h)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
@@ -97,7 +97,7 @@ export default function Dashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-muted-foreground">No data available</div>
+                <div className="h-full flex items-center justify-center text-muted-foreground">Sem dados disponíveis</div>
               )}
             </div>
           </CardContent>
@@ -105,7 +105,7 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Events</CardTitle>
+            <CardTitle>Eventos recentes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -128,7 +128,7 @@ export default function Dashboard() {
                           {format(new Date(event.detectedAt), 'HH:mm')}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">{event.cameraName || `Camera ${event.cameraId}`}</p>
+                      <p className="text-xs text-muted-foreground truncate">{event.cameraName || `Câmera ${event.cameraId}`}</p>
                       {event.confidence && (
                         <div className="flex items-center mt-1">
                           <div className="w-full bg-secondary h-1 rounded-full overflow-hidden">
@@ -144,7 +144,7 @@ export default function Dashboard() {
               {!recentEvents?.length && (
                 <div className="text-center py-8 text-muted-foreground">
                   <SquareActivity size={24} className="mx-auto mb-2 opacity-50" />
-                  <p>No recent events</p>
+                  <p>Nenhum evento recente</p>
                 </div>
               )}
             </div>

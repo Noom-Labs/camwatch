@@ -13,11 +13,11 @@ export default function Cameras() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Cameras</h1>
-          <p className="text-muted-foreground">Manage your fleet of IP cameras</p>
+          <h1 className="text-2xl font-bold tracking-tight">Câmeras</h1>
+          <p className="text-muted-foreground">Gerencie sua frota de câmeras IP</p>
         </div>
         <Link href="/cameras/new">
-          <Button><Plus size={16} className="mr-2" /> Add Camera</Button>
+          <Button><Plus size={16} className="mr-2" /> Adicionar câmera</Button>
         </Link>
       </div>
 
@@ -32,10 +32,10 @@ export default function Cameras() {
       ) : cameras?.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 bg-card border border-border rounded-lg text-center">
           <Cctv size={48} className="text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">No cameras found</h3>
-          <p className="text-muted-foreground max-w-sm mt-2 mb-6">Add your first camera to start monitoring events and detections.</p>
+          <h3 className="text-lg font-medium">Nenhuma câmera encontrada</h3>
+          <p className="text-muted-foreground max-w-sm mt-2 mb-6">Adicione sua primeira câmera para começar a monitorar eventos e detecções.</p>
           <Link href="/cameras/new">
-            <Button>Add your first camera</Button>
+            <Button>Adicionar primeira câmera</Button>
           </Link>
         </div>
       ) : (
@@ -51,7 +51,7 @@ export default function Cameras() {
                       </div>
                       <div>
                         <h3 className="font-semibold group-hover:text-primary transition-colors">{camera.name}</h3>
-                        <p className="text-xs text-muted-foreground truncate max-w-[150px]">{camera.ip || camera.rtspUrl || 'No IP configured'}</p>
+                        <p className="text-xs text-muted-foreground truncate max-w-[150px]">{camera.ip || camera.rtspUrl || 'Sem IP configurado'}</p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
@@ -70,12 +70,12 @@ export default function Cameras() {
                   
                   <div className="grid grid-cols-2 gap-2 mt-4 text-xs text-muted-foreground border-t border-border pt-4">
                     <div>
-                      <span className="block opacity-70">Manufacturer</span>
-                      <span className="font-medium text-foreground">{camera.manufacturer || 'Unknown'}</span>
+                      <span className="block opacity-70">Fabricante</span>
+                      <span className="font-medium text-foreground">{camera.manufacturer || 'Desconhecido'}</span>
                     </div>
                     <div>
-                      <span className="block opacity-70">Last Seen</span>
-                      <span className="font-medium text-foreground">{camera.lastSeenAt ? formatDistanceToNow(new Date(camera.lastSeenAt), { addSuffix: true }) : 'Never'}</span>
+                      <span className="block opacity-70">Vista por último</span>
+                      <span className="font-medium text-foreground">{camera.lastSeenAt ? formatDistanceToNow(new Date(camera.lastSeenAt), { addSuffix: true }) : 'Nunca'}</span>
                     </div>
                   </div>
                 </CardContent>
