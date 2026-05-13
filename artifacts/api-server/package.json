@@ -18,6 +18,7 @@
     "drizzle-orm": "catalog:",
     "express": "^5",
     "jsonwebtoken": "^9.0.3",
+    "onvif": "^0.8.1",
     "pino": "^9",
     "pino-http": "^10",
     "uuid": "^14.0.0",
