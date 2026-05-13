@@ -8,6 +8,7 @@ import zonesRouter from "./zones";
 import notificationsRouter from "./notifications";
 import edgeAgentsRouter from "./edge-agents";
 import usersRouter from "./users";
+import webhooksRouter from "./webhooks";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(zonesRouter);
 router.use(notificationsRouter);
 router.use(edgeAgentsRouter);
 router.use(usersRouter);
+router.use(webhooksRouter);
 
 export default router;

@@ -8,9 +8,47 @@ import { Link } from "wouter";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   ArrowLeft, Cctv, Wifi, WifiOff, RefreshCw,
-  MapPin, Wrench, Tag, FileText, Monitor, Trash2, ExternalLink, AlertTriangle
+  MapPin, Wrench, Tag, FileText, Monitor, Trash2, ExternalLink, AlertTriangle,
+  Bell, Copy, Check, ChevronDown, ChevronUp
 } from "lucide-react";
 import { toast } from "sonner";
+
+// ── Webhook info hook ──────────────────────────────────────────────────────────
+
+function useWebhookInfo(cameraId: number) {
+  const [webhookUrl, setWebhookUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const load = useCallback(async () => {
+    if (webhookUrl) { setOpen(true); return; }
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(`/api/cameras/${cameraId}/webhook`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWebhookUrl(data.webhookUrl);
+        setOpen(true);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [cameraId, webhookUrl]);
+
+  const copy = useCallback(() => {
+    if (!webhookUrl) return;
+    navigator.clipboard.writeText(webhookUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast.success("URL copiada!");
+  }, [webhookUrl]);
+
+  return { webhookUrl, loading, open, setOpen, load, copy, copied };
+}
 
 // ── Live snapshot hook ─────────────────────────────────────────────────────────
 
@@ -96,6 +134,7 @@ export default function CameraDetail() {
   const { data: camera, isLoading: camLoading } = useGetCamera(cameraId);
   const { data: events, isLoading: eventsLoading } = useListEvents({ cameraId });
   const deleteMutation = useDeleteCamera();
+  const webhook = useWebhookInfo(cameraId);
 
   const { blobUrl, error: snapError, loading: snapLoading } = useLiveSnapshot(cameraId, liveActive && !!camera);
 
@@ -329,6 +368,74 @@ export default function CameraDetail() {
                 </div>
               )}
             </CardContent>
+          </Card>
+
+          {/* ── Configurar Alertas ── */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Bell size={14} /> Alertas de movimento
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 gap-1"
+                  onClick={() => webhook.open ? webhook.setOpen(false) : webhook.load()}
+                  disabled={webhook.loading}
+                >
+                  {webhook.loading ? <RefreshCw size={11} className="animate-spin" /> : webhook.open ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                  {webhook.open ? "Fechar" : "Configurar"}
+                </Button>
+              </div>
+            </CardHeader>
+
+            {webhook.open && (
+              <CardContent className="space-y-4 text-sm">
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Cole esta URL nas configurações de alarme da sua câmera Intelbras. Ela vai chamar o CamWatch automaticamente ao detectar movimento.
+                </p>
+
+                {/* Webhook URL */}
+                {webhook.webhookUrl && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">URL do webhook</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 text-xs bg-zinc-900 border border-border rounded px-2 py-1.5 break-all font-mono text-green-400">
+                        {webhook.webhookUrl}
+                      </code>
+                      <Button size="icon" variant="outline" className="h-8 w-8 flex-shrink-0" onClick={webhook.copy}>
+                        {webhook.copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step-by-step */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-foreground">Como configurar na câmera Intelbras:</p>
+                  <ol className="space-y-1.5 text-xs text-muted-foreground list-none">
+                    {[
+                      "Acesse a interface web da câmera (http://IP da câmera)",
+                      'Vá em Configuração → Evento → Detecção de Movimento',
+                      'Ative a detecção e clique em "Ação de alarme"',
+                      'Marque "HTTP" ou "Notificação HTTP" e cole a URL acima',
+                      'Método: POST (ou GET se não tiver opção)',
+                      'Salve e teste movendo a mão na frente da câmera',
+                    ].map((step, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="flex-shrink-0 w-4 h-4 rounded-full bg-primary/20 text-primary text-[10px] flex items-center justify-center font-bold">{i + 1}</span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 p-2.5 text-xs text-yellow-300 leading-relaxed">
+                  A câmera precisa ter acesso à internet para enviar o alerta. Se estiver em rede local sem internet, use o ONVIF (o poller já monitora automaticamente).
+                </div>
+              </CardContent>
+            )}
           </Card>
 
           {camera.notes && (

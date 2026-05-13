@@ -132,6 +132,33 @@ router.patch("/cameras/:id/status", requireAuth, async (req, res): Promise<void>
   res.json(formatCamera(camera));
 });
 
+// ── Webhook info ──────────────────────────────────────────────────────────────
+
+router.get("/cameras/:id/webhook", requireAuth, async (req, res): Promise<void> => {
+  const { generateWebhookToken } = await import("./webhooks");
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+
+  const [camera] = await db
+    .select({ id: camerasTable.id, tenantId: camerasTable.tenantId })
+    .from(camerasTable)
+    .where(and(eq(camerasTable.id, id), eq(camerasTable.tenantId, req.user!.tenantId)));
+
+  if (!camera) {
+    res.status(404).json({ error: "Camera not found" });
+    return;
+  }
+
+  const token = generateWebhookToken(id);
+  // Build the public base URL from the request
+  const proto = req.headers["x-forwarded-proto"] ?? req.protocol;
+  const host = req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost";
+  const baseUrl = `${proto}://${host}`;
+  const webhookUrl = `${baseUrl}/api/webhooks/intelbras?camera_id=${id}&token=${token}`;
+
+  res.json({ webhookUrl, token });
+});
+
 // ── Snapshot proxy ────────────────────────────────────────────────────────────
 // Tries common Intelbras / generic camera snapshot endpoints in order.
 
