@@ -28,12 +28,36 @@ declare module "onvif" {
     };
   }
 
+  interface DeviceInformation {
+    manufacturer?: string;
+    model?: string;
+    firmwareVersion?: string;
+    serialNumber?: string;
+    hardwareId?: string;
+  }
+
   class Cam extends EventEmitter {
     constructor(options: CamOptions, callback?: (this: Cam, error: Error | null) => void);
     on(event: "event", listener: (message: OnvifMessage, xml?: string) => void): this;
     on(event: string, listener: (...args: unknown[]) => void): this;
     getSystemDateAndTime(callback: (err: Error | null, date: Date) => void): void;
+    getDeviceInformation(callback: (err: Error | null, info: DeviceInformation, xml?: string) => void): void;
   }
 
-  export { Cam, CamOptions, OnvifMessage, OnvifSimpleItem };
+  interface DiscoveredDevice {
+    hostname: string;
+    port?: number;
+    xaddrs?: string[];
+    scopes?: string[];
+  }
+
+  interface DiscoveryStatic {
+    probe(options?: { timeout?: number }, callback?: (err: Error | null, devices: DiscoveredDevice[]) => void): void;
+    on(event: "device", listener: (cam: Cam, rinfo: { address: string; port: number }, xml: string) => void): void;
+    on(event: "error", listener: (err: Error, xml: string) => void): void;
+  }
+
+  const Discovery: DiscoveryStatic;
+
+  export { Cam, CamOptions, OnvifMessage, OnvifSimpleItem, DeviceInformation, DiscoveredDevice, Discovery };
 }

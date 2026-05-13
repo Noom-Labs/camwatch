@@ -19,7 +19,6 @@ function showBrowserNotification(title: string, body: string) {
       body,
       icon: "/favicon.ico",
       tag: "camwatch-alert",
-      renotify: true,
     });
     // Auto-close after 8s
     setTimeout(() => n.close(), 8_000);

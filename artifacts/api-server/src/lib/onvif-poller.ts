@@ -159,15 +159,9 @@ async function disconnectStale(activeCameraIds: number[]): Promise<void> {
 
 async function syncCameras(): Promise<void> {
   try {
-    const cameras = await db
-      .select()
-      .from(camerasTable)
-      .where(
-        and(
-          eq(camerasTable.mode, "cloud_events"),
-          eq(camerasTable.onvifEnabled, true)
-        )
-      );
+    // Fetch ALL cameras — filter in-process to those with an IP configured
+    const allCameras = await db.select().from(camerasTable);
+    const cameras = allCameras.filter((c) => c.ip && c.ip.trim() !== "");
 
     const ids = cameras.map((c) => c.id);
     await disconnectStale(ids);
@@ -205,4 +199,8 @@ export function stopOnvifPoller(): void {
 
 export function getPollerStatus(): { connected: number; cameraIds: number[] } {
   return { connected: activeCams.size, cameraIds: [...activeCams.keys()] };
+}
+
+export function triggerSync(): void {
+  syncCameras().catch((err) => logger.error({ err }, "ONVIF: triggerSync failed"));
 }

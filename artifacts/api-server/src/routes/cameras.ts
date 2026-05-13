@@ -1,9 +1,79 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
+import { Cam } from "onvif";
 import { db, camerasTable } from "@workspace/db";
 import { requireAuth } from "../middleware/auth";
+import { triggerSync } from "../lib/onvif-poller";
 
 const router: IRouter = Router();
+
+// ── Test connection (must be before /:id routes) ──────────────────────────────
+
+function parseHostPort(ip: string): { hostname: string; port: number } {
+  const [hostname, portStr] = ip.split(":");
+  return { hostname: hostname ?? ip, port: portStr ? parseInt(portStr, 10) : 80 };
+}
+
+router.post("/cameras/test-connection", requireAuth, async (req, res): Promise<void> => {
+  const { ip, username, password } = req.body as { ip?: string; username?: string; password?: string };
+
+  if (!ip) {
+    res.status(400).json({ error: "ip é obrigatório" });
+    return;
+  }
+
+  const { hostname, port } = parseHostPort(ip);
+
+  try {
+    const result = await new Promise<{ manufacturer?: string; model?: string; serialNumber?: string }>((resolve, reject) => {
+      new Cam(
+        { hostname, port, username: username ?? "admin", password: password ?? "", timeout: 10_000, preserveAddress: true },
+        function (this: Cam, err) {
+          if (err) { reject(err); return; }
+          this.getDeviceInformation((err2, info) => {
+            if (err2) resolve({});
+            else resolve({ manufacturer: info?.manufacturer, model: info?.model, serialNumber: info?.serialNumber });
+          });
+        }
+      );
+    });
+    res.json({ connected: true, ...result });
+  } catch (err: any) {
+    res.status(502).json({ error: err?.message ?? "Não foi possível conectar" });
+  }
+});
+
+// ── Network scan ──────────────────────────────────────────────────────────────
+
+router.get("/cameras/scan-network", requireAuth, async (_req, res): Promise<void> => {
+  try {
+    const { Discovery } = await import("onvif") as any;
+    const found: Array<{ ip: string; name?: string }> = [];
+
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(resolve, 6_000);
+
+      Discovery.on("device", (cam: any, rinfo: { address: string }) => {
+        if (rinfo?.address) {
+          found.push({ ip: rinfo.address });
+        }
+      });
+
+      Discovery.on("error", () => {/* ignore */});
+
+      Discovery.probe({ timeout: 5000 }, () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+    });
+
+    // Deduplicate by IP
+    const unique = [...new Map(found.map((d) => [d.ip, d])).values()];
+    res.json({ devices: unique });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message ?? "Scan failed", devices: [] });
+  }
+});
 
 router.get("/cameras", requireAuth, async (req, res): Promise<void> => {
   const cameras = await db
@@ -31,12 +101,15 @@ router.post("/cameras", requireAuth, async (req, res): Promise<void> => {
     passwordEncrypted: password ?? null,
     manufacturer: manufacturer ?? null,
     model: model ?? null,
-    onvifEnabled: onvifEnabled ?? false,
+    onvifEnabled: true,
     mode: mode ?? "cloud_events",
     status: "unknown",
     location: location ?? null,
     notes: notes ?? null,
   }).returning();
+
+  // Immediately try to connect via ONVIF if camera has an IP
+  if (ip) triggerSync();
 
   res.status(201).json(formatCamera(camera));
 });
